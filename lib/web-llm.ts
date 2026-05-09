@@ -11,6 +11,7 @@ export const DEFAULT_WEBLLM_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 
 let activeEnginePromise: Promise<MLCEngine> | null = null;
 let activeModel: string | null = null;
+let loadingModel: string | null = null;
 
 const getEngine = async (
   model: string,
@@ -28,13 +29,30 @@ const getEngine = async (
     return activeEnginePromise;
   }
 
+  if (activeEnginePromise && loadingModel && loadingModel !== model) {
+    throw new Error(
+      "A WebLLM model is still loading. Please wait and retry with one model at a time."
+    );
+  }
+
   const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
-  activeModel = model;
+  loadingModel = model;
   activeEnginePromise = CreateMLCEngine(model, {
     initProgressCallback: (report) => {
       onProgress?.(report);
     },
-  });
+  })
+    .then((engine) => {
+      activeModel = model;
+      loadingModel = null;
+      return engine;
+    })
+    .catch((error) => {
+      activeEnginePromise = null;
+      activeModel = null;
+      loadingModel = null;
+      throw error;
+    });
   return activeEnginePromise;
 };
 

@@ -45,13 +45,15 @@ export function Settings({
   }, [open]);
 
   const handleSaveSettings = () => {
+    const resolvedOpenAiModel = customModel || "gpt-4o-mini";
+    const resolvedWebLlmModel = webLlmModel || DEFAULT_WEBLLM_MODEL;
     localStorage.setItem("provider", provider);
     localStorage.setItem("openai_api_key", apiKey);
     localStorage.setItem("openai_base_url", baseUrl);
-    localStorage.setItem("openai_model", customModel);
-    localStorage.setItem("webllm_model", webLlmModel);
-    onModelChange(customModel || "gpt-4o-mini");
-    onWebLlmModelChange(webLlmModel || DEFAULT_WEBLLM_MODEL);
+    localStorage.setItem("openai_model", resolvedOpenAiModel);
+    localStorage.setItem("webllm_model", resolvedWebLlmModel);
+    onModelChange(resolvedOpenAiModel);
+    onWebLlmModelChange(resolvedWebLlmModel);
     toast.success("Settings saved!");
     onClose(false);
   };

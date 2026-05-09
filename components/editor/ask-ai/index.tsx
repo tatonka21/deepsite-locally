@@ -53,6 +53,7 @@ export function AskAI({
 }) {
   const refThink = useRef<HTMLDivElement | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const webLlmLastRenderRef = useRef(0);
 
   const [prompt, setPrompt] = useState("");
   const [hasAsked, setHasAsked] = useState(false);
@@ -108,8 +109,8 @@ export function AskAI({
 
       if (currentProvider === "webllm") {
         let streamedResponse = "";
-        let lastRenderTime = 0;
         setIsThinking(false);
+        webLlmLastRenderRef.current = 0;
 
         const response = await runWebLlmCompletion({
           model,
@@ -140,9 +141,9 @@ export function AskAI({
             }
 
             const now = Date.now();
-            if (now - lastRenderTime > 300) {
+            if (now - webLlmLastRenderRef.current > 300) {
               setHtml(partialDoc);
-              lastRenderTime = now;
+              webLlmLastRenderRef.current = now;
             }
           },
         });
