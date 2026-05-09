@@ -20,6 +20,10 @@ import { TooltipContent } from "@radix-ui/react-tooltip";
 import { SelectedHtmlElement } from "./selected-html-element";
 import { FollowUpTooltip } from "./follow-up-tooltip";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
+import {
+  DEFAULT_WEBLLM_MODEL,
+  runWebLlmCompletion,
+} from "@/lib/web-llm";
 
 export function AskAI({
   html,
@@ -62,10 +66,25 @@ export function AskAI({
   const [controller, setController] = useState<AbortController | null>(null);
   const [isFollowUp, setIsFollowUp] = useState(true);
 
-  const getModel = () =>
-  typeof window !== "undefined"
-    ? localStorage.getItem("openai_model") || "gpt-4o-mini"
-    : "gpt-4o-mini";
+  const getProvider = () => {
+    if (provider === "webllm") return "webllm";
+    if (provider === "openai-compatible") return "openai-compatible";
+    return "openai-compatible";
+  };
+
+  const getModel = (activeProvider: string = getProvider()) => {
+    if (typeof window === "undefined") {
+      return activeProvider === "webllm"
+        ? DEFAULT_WEBLLM_MODEL
+        : "gpt-4o-mini";
+    }
+
+    if (activeProvider === "webllm") {
+      return localStorage.getItem("webllm_model") || DEFAULT_WEBLLM_MODEL;
+    }
+
+    return localStorage.getItem("openai_model") || "gpt-4o-mini";
+  };
 
   const callAi = async (redesignMarkdown?: string) => {
     if (isAiWorking) return;
@@ -84,13 +103,71 @@ export function AskAI({
     setController(abortController);
     try {
       onNewPrompt(prompt);
+      const currentProvider = getProvider();
+      const model = getModel(currentProvider);
+
+      if (currentProvider === "webllm") {
+        let streamedResponse = "";
+        let lastRenderTime = 0;
+        setIsThinking(false);
+
+        const response = await runWebLlmCompletion({
+          model,
+          prompt,
+          html: isSameHtml ? "" : html,
+          redesignMarkdown,
+          onProgress: (report) => {
+            if (!report.text) return;
+            setThink(
+              `${report.text} (${Math.round((report.progress || 0) * 100)}%)`
+            );
+            setOpenThink(true);
+          },
+          onChunk: (chunk) => {
+            streamedResponse += chunk;
+            const newHtml = streamedResponse.match(/<!DOCTYPE html>[\s\S]*/)?.[0];
+            if (!newHtml) return;
+
+            let partialDoc = newHtml;
+            if (partialDoc.includes("<head>") && !partialDoc.includes("</head>")) {
+              partialDoc += "\n</head>";
+            }
+            if (partialDoc.includes("<body") && !partialDoc.includes("</body>")) {
+              partialDoc += "\n</body>";
+            }
+            if (!partialDoc.includes("</html>")) {
+              partialDoc += "\n</html>";
+            }
+
+            const now = Date.now();
+            if (now - lastRenderTime > 300) {
+              setHtml(partialDoc);
+              lastRenderTime = now;
+            }
+          },
+        });
+
+        const finalDoc =
+          response.match(/<!DOCTYPE html>[\s\S]*<\/html>/)?.[0] ?? response;
+        setHtml(finalDoc);
+        toast.success("AI responded successfully");
+        setPreviousPrompt(prompt);
+        setPrompt("");
+        setHasAsked(true);
+        setisAiWorking(false);
+        setThink("");
+        setOpenThink(false);
+        onSuccess(finalDoc, prompt);
+        if (audio.current) audio.current.play();
+        return;
+      }
+
       if (isFollowUp && !redesignMarkdown && !isSameHtml) {
         const selectedElementHtml = selectedElement
           ? selectedElement.outerHTML
           : "";
         const apiKey = localStorage.getItem("openai_api_key");
         const baseUrl = localStorage.getItem("openai_base_url");
-        const model = getModel();
         const request = await fetch("/api/ask-ai", {
           method: "PUT",
           body: JSON.stringify({
@@ -126,7 +203,6 @@ export function AskAI({
       } else {
         const apiKey = localStorage.getItem("openai_api_key");
         const baseUrl = localStorage.getItem("openai_base_url");
-        const model = getModel();
         const request = await fetch("/api/ask-ai", {
           method: "POST",
           body: JSON.stringify({
@@ -414,10 +490,12 @@ export function AskAI({
           <div className="flex items-center justify-end gap-2">
             <Settings
               provider={provider as string}
-              model={getModel()}
               onChange={setProvider}
               onModelChange={(newModel: string) => {
                 localStorage.setItem("openai_model", newModel);
+              }}
+              onWebLlmModelChange={(newModel: string) => {
+                localStorage.setItem("webllm_model", newModel);
               }}
               open={openProvider}
               error={providerError}

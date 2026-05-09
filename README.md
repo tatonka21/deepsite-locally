@@ -41,6 +41,9 @@ OPENAI_API_KEY=sk-...
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
+Or use **Settings → Provider → WebLLM (Browser/WebGPU)** to run in-browser AI (no API key).  
+Then set a WebLLM model ID (default: `Llama-3.2-1B-Instruct-q4f16_1-MLC`).
+
 ### 5. For build and production
 ```bash
 npm run build
