@@ -18,7 +18,7 @@ Perfect for those who want to customize, integrate, or have full control over th
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/tatonka21/deepsite-locally.git
+git clone https://github.com/YOUR_USERNAME/deepsite-locally.git
 cd deepsite-locally
 ```
 
