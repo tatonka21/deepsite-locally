@@ -25,9 +25,6 @@ import {
   runWebLlmCompletion,
 } from "@/lib/web-llm";
 
-const HTML_DOCUMENT_REGEX = /<!DOCTYPE html>[\s\S]*<\/html>/;
-const HTML_PARTIAL_REGEX = /<!DOCTYPE html>[\s\S]*/;
-
 export function AskAI({
   html,
   setHtml,
@@ -57,6 +54,9 @@ export function AskAI({
   const refThink = useRef<HTMLDivElement | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const webLlmLastRenderRef = useRef(0);
+  const htmlDocumentRegex = /<!DOCTYPE html>[\s\S]*<\/html>/;
+  const htmlPartialRegex = /<!DOCTYPE html>[\s\S]*/;
+  const WEBLLM_RENDER_THROTTLE_MS = 300;
 
   const [prompt, setPrompt] = useState("");
   const [hasAsked, setHasAsked] = useState(false);
@@ -129,7 +129,7 @@ export function AskAI({
           },
           onChunk: (chunk) => {
             streamedResponse += chunk;
-            const newHtml = streamedResponse.match(HTML_PARTIAL_REGEX)?.[0];
+            const newHtml = streamedResponse.match(htmlPartialRegex)?.[0];
             if (!newHtml) return;
 
             let partialDoc = newHtml;
@@ -144,14 +144,14 @@ export function AskAI({
             }
 
             const now = Date.now();
-            if (now - webLlmLastRenderRef.current > 300) {
+            if (now - webLlmLastRenderRef.current > WEBLLM_RENDER_THROTTLE_MS) {
               setHtml(partialDoc);
               webLlmLastRenderRef.current = now;
             }
           },
         });
 
-        const finalDoc = response.match(HTML_DOCUMENT_REGEX)?.[0] ?? response;
+        const finalDoc = response.match(htmlDocumentRegex)?.[0] ?? response;
         setHtml(finalDoc);
         toast.success("AI responded successfully");
         setPreviousPrompt(prompt);
@@ -267,7 +267,7 @@ export function AskAI({
               if (audio.current) audio.current.play();
 
               // Now we have the complete HTML including </html>, so set it to be sure
-              const finalDoc = contentResponse.match(HTML_DOCUMENT_REGEX)?.[0];
+              const finalDoc = contentResponse.match(htmlDocumentRegex)?.[0];
               if (finalDoc) {
                 setHtml(finalDoc);
               }
@@ -292,7 +292,7 @@ export function AskAI({
 
             contentResponse += chunk;
 
-            const newHtml = contentResponse.match(HTML_PARTIAL_REGEX)?.[0];
+            const newHtml = contentResponse.match(htmlPartialRegex)?.[0];
             if (newHtml) {
               setIsThinking(false);
               let partialDoc = newHtml;

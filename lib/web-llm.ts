@@ -13,7 +13,7 @@ let activeEnginePromise: Promise<MLCEngine> | null = null;
 let activeModel: string | null = null;
 let loadingModel: string | null = null;
 
-const getEngine = async (
+const ensureEngine = async (
   model: string,
   onProgress?: (report: InitProgressReport) => void
 ) => {
@@ -34,7 +34,7 @@ const getEngine = async (
 
   if (activeEnginePromise && loadingModel && loadingModel !== model) {
     throw new Error(
-      "A WebLLM model is still loading. Please wait and retry with one model at a time."
+      "Another WebLLM model is currently loading. Please wait for it to finish before switching models."
     );
   }
 
@@ -74,7 +74,7 @@ export const runWebLlmCompletion = async ({
   onProgress?: (report: InitProgressReport) => void;
   onChunk?: (chunk: string) => void;
 }) => {
-  const engine = await getEngine(model, onProgress);
+  const engine = await ensureEngine(model, onProgress);
 
   const userContent = redesignMarkdown
     ? `Here is my current design as a markdown:\n\n${redesignMarkdown}\n\nNow, please create a new design based on this markdown.`
