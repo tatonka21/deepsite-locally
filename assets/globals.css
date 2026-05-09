@@ -44,6 +44,8 @@
 }
 
 :root {
+  --font-inter-sans: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-ptSans-mono: "PT Sans", "Segoe UI", Helvetica, Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
