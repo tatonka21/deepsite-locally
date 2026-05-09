@@ -25,7 +25,10 @@ const getEngine = async (
     throw new Error("WebGPU is not available in this browser.");
   }
 
-  if (activeEnginePromise && activeModel === model) {
+  if (
+    activeEnginePromise &&
+    (activeModel === model || loadingModel === model)
+  ) {
     return activeEnginePromise;
   }
 

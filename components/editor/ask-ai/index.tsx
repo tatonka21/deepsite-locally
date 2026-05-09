@@ -25,6 +25,9 @@ import {
   runWebLlmCompletion,
 } from "@/lib/web-llm";
 
+const HTML_DOCUMENT_REGEX = /<!DOCTYPE html>[\s\S]*<\/html>/;
+const HTML_PARTIAL_REGEX = /<!DOCTYPE html>[\s\S]*/;
+
 export function AskAI({
   html,
   setHtml,
@@ -126,7 +129,7 @@ export function AskAI({
           },
           onChunk: (chunk) => {
             streamedResponse += chunk;
-            const newHtml = streamedResponse.match(/<!DOCTYPE html>[\s\S]*/)?.[0];
+            const newHtml = streamedResponse.match(HTML_PARTIAL_REGEX)?.[0];
             if (!newHtml) return;
 
             let partialDoc = newHtml;
@@ -148,8 +151,7 @@ export function AskAI({
           },
         });
 
-        const finalDoc =
-          response.match(/<!DOCTYPE html>[\s\S]*<\/html>/)?.[0] ?? response;
+        const finalDoc = response.match(HTML_DOCUMENT_REGEX)?.[0] ?? response;
         setHtml(finalDoc);
         toast.success("AI responded successfully");
         setPreviousPrompt(prompt);
@@ -265,9 +267,7 @@ export function AskAI({
               if (audio.current) audio.current.play();
 
               // Now we have the complete HTML including </html>, so set it to be sure
-              const finalDoc = contentResponse.match(
-                /<!DOCTYPE html>[\s\S]*<\/html>/
-              )?.[0];
+              const finalDoc = contentResponse.match(HTML_DOCUMENT_REGEX)?.[0];
               if (finalDoc) {
                 setHtml(finalDoc);
               }
@@ -292,9 +292,7 @@ export function AskAI({
 
             contentResponse += chunk;
 
-            const newHtml = contentResponse.match(
-              /<!DOCTYPE html>[\s\S]*/
-            )?.[0];
+            const newHtml = contentResponse.match(HTML_PARTIAL_REGEX)?.[0];
             if (newHtml) {
               setIsThinking(false);
               let partialDoc = newHtml;

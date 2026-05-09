@@ -38,7 +38,7 @@ export function Settings({
   useEffect(() => {
     setApiKey(localStorage.getItem("openai_api_key") || "");
     setBaseUrl(localStorage.getItem("openai_base_url") || "");
-    setCustomModel(localStorage.getItem("openai_model") || "");
+    setCustomModel(localStorage.getItem("openai_model") || "gpt-4o-mini");
     setWebLlmModel(
       localStorage.getItem("webllm_model") || DEFAULT_WEBLLM_MODEL
     );
@@ -143,7 +143,7 @@ export function Settings({
                   </p>
                   <Input
                     type="text"
-                    placeholder="e.g., gemma3:1b"
+                    placeholder="e.g., gpt-4o-mini"
                     value={customModel}
                     onChange={(e) => setCustomModel(e.target.value)}
                     className="!bg-neutral-800 !border-neutral-700 !text-neutral-200"
