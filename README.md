@@ -37,7 +37,7 @@ npm run dev
 Create a `.env.local` file:
 
 ```bash
-OPENAI_API_KEY=your_api_key
+OPENAI_API_KEY=sk-...
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
