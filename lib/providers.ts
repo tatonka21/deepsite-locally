@@ -1,3 +1,5 @@
+export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+
 export const PROVIDERS = {
   "openai-compatible": {
     name: "OpenAI Compatible",
@@ -13,7 +15,7 @@ export const PROVIDERS = {
 
 export const MODELS = [
   {
-    value: "gpt-4o-mini", // Default model, can be overridden by user
+    value: DEFAULT_OPENAI_MODEL, // Default model, can be overridden by user
     label: "GPT-4o Mini (Default)",
     providers: ["openai-compatible"],
     autoProvider: "openai-compatible",

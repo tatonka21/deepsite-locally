@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PROVIDERS } from "@/lib/providers";
+import { DEFAULT_OPENAI_MODEL, PROVIDERS } from "@/lib/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -38,14 +38,14 @@ export function Settings({
   useEffect(() => {
     setApiKey(localStorage.getItem("openai_api_key") || "");
     setBaseUrl(localStorage.getItem("openai_base_url") || "");
-    setCustomModel(localStorage.getItem("openai_model") || "gpt-4o-mini");
+    setCustomModel(localStorage.getItem("openai_model") || DEFAULT_OPENAI_MODEL);
     setWebLlmModel(
       localStorage.getItem("webllm_model") || DEFAULT_WEBLLM_MODEL
     );
   }, [open]);
 
   const handleSaveSettings = () => {
-    const resolvedOpenAiModel = customModel || "gpt-4o-mini";
+    const resolvedOpenAiModel = customModel || DEFAULT_OPENAI_MODEL;
     const resolvedWebLlmModel = webLlmModel || DEFAULT_WEBLLM_MODEL;
     localStorage.setItem("provider", provider);
     localStorage.setItem("openai_api_key", apiKey);
@@ -143,7 +143,7 @@ export function Settings({
                   </p>
                   <Input
                     type="text"
-                    placeholder="e.g., gpt-4o-mini"
+                    placeholder="e.g., gpt-4o-mini, gemma3:1b"
                     value={customModel}
                     onChange={(e) => setCustomModel(e.target.value)}
                     className="!bg-neutral-800 !border-neutral-700 !text-neutral-200"

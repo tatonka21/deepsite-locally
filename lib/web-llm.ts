@@ -38,13 +38,15 @@ const ensureEngine = async (
     );
   }
 
-  const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
   loadingModel = model;
-  activeEnginePromise = CreateMLCEngine(model, {
-    initProgressCallback: (report) => {
-      onProgress?.(report);
-    },
-  })
+  activeEnginePromise = import("@mlc-ai/web-llm")
+    .then(({ CreateMLCEngine }) =>
+      CreateMLCEngine(model, {
+        initProgressCallback: (report) => {
+          onProgress?.(report);
+        },
+      })
+    )
     .then((engine) => {
       activeModel = model;
       loadingModel = null;

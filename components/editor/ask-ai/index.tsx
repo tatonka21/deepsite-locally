@@ -8,7 +8,7 @@ import { ArrowUp, ChevronDown, Crosshair } from "lucide-react";
 import { FaStopCircle } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
-import { MODELS } from "@/lib/providers";
+import { DEFAULT_OPENAI_MODEL, MODELS } from "@/lib/providers";
 import { HtmlHistory } from "@/types";
 import { InviteFriends } from "@/components/invite-friends";
 import { Settings } from "@/components/editor/ask-ai/settings";
@@ -54,9 +54,6 @@ export function AskAI({
   const refThink = useRef<HTMLDivElement | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const webLlmLastRenderRef = useRef(0);
-  const htmlDocumentRegex = /<!DOCTYPE html>[\s\S]*<\/html>/;
-  const htmlPartialRegex = /<!DOCTYPE html>[\s\S]*/;
-  const WEBLLM_RENDER_THROTTLE_MS = 300;
 
   const [prompt, setPrompt] = useState("");
   const [hasAsked, setHasAsked] = useState(false);
@@ -80,14 +77,32 @@ export function AskAI({
     if (typeof window === "undefined") {
       return activeProvider === "webllm"
         ? DEFAULT_WEBLLM_MODEL
-        : "gpt-4o-mini";
+        : DEFAULT_OPENAI_MODEL;
     }
 
     if (activeProvider === "webllm") {
       return localStorage.getItem("webllm_model") || DEFAULT_WEBLLM_MODEL;
     }
 
-    return localStorage.getItem("openai_model") || "gpt-4o-mini";
+    return localStorage.getItem("openai_model") || DEFAULT_OPENAI_MODEL;
+  };
+
+  const htmlDocumentRegex = useMemo(() => /<!DOCTYPE html>[\s\S]*<\/html>/, []);
+  const htmlPartialRegex = useMemo(() => /<!DOCTYPE html>[\s\S]*/, []);
+  const WEBLLM_RENDER_THROTTLE_MS = 300;
+
+  const normalizeStreamingHtmlDocument = (htmlFragment: string) => {
+    let partialDoc = htmlFragment;
+    if (partialDoc.includes("<head>") && !partialDoc.includes("</head>")) {
+      partialDoc += "\n</head>";
+    }
+    if (partialDoc.includes("<body") && !partialDoc.includes("</body>")) {
+      partialDoc += "\n</body>";
+    }
+    if (!partialDoc.includes("</html>")) {
+      partialDoc += "\n</html>";
+    }
+    return partialDoc;
   };
 
   const callAi = async (redesignMarkdown?: string) => {
@@ -132,16 +147,7 @@ export function AskAI({
             const newHtml = streamedResponse.match(htmlPartialRegex)?.[0];
             if (!newHtml) return;
 
-            let partialDoc = newHtml;
-            if (partialDoc.includes("<head>") && !partialDoc.includes("</head>")) {
-              partialDoc += "\n</head>";
-            }
-            if (partialDoc.includes("<body") && !partialDoc.includes("</body>")) {
-              partialDoc += "\n</body>";
-            }
-            if (!partialDoc.includes("</html>")) {
-              partialDoc += "\n</html>";
-            }
+            const partialDoc = normalizeStreamingHtmlDocument(newHtml);
 
             const now = Date.now();
             if (now - webLlmLastRenderRef.current > WEBLLM_RENDER_THROTTLE_MS) {
@@ -295,22 +301,7 @@ export function AskAI({
             const newHtml = contentResponse.match(htmlPartialRegex)?.[0];
             if (newHtml) {
               setIsThinking(false);
-              let partialDoc = newHtml;
-              if (
-                partialDoc.includes("<head>") &&
-                !partialDoc.includes("</head>")
-              ) {
-                partialDoc += "\n</head>";
-              }
-              if (
-                partialDoc.includes("<body") &&
-                !partialDoc.includes("</body>")
-              ) {
-                partialDoc += "\n</body>";
-              }
-              if (!partialDoc.includes("</html>")) {
-                partialDoc += "\n</html>";
-              }
+              const partialDoc = normalizeStreamingHtmlDocument(newHtml);
 
               // Throttle the re-renders to avoid flashing/flicker
               const now = Date.now();
