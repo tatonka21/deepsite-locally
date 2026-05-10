@@ -43,7 +43,7 @@ npm install
 npm run dev
 ```
 
-### 5. For lint, build and production
+### 5. For linting, build and production
 ```bash
 npm run lint
 npm run build
