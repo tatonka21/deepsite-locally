@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, PT_Sans } from "next/font/google";
 
 
 import TanstackProvider from "@/components/providers/tanstack-query-provider";
@@ -7,17 +6,6 @@ import "@/assets/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import AppContext from "@/components/contexts/app-context";
 import Script from "next/script";
-
-const inter = Inter({
-  variable: "--font-inter-sans",
-  subsets: ["latin"],
-});
-
-const ptSans = PT_Sans({
-  variable: "--font-ptSans-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-});
 
 export const metadata: Metadata = {
   title: "DeepSite | Build with AI ✨",
@@ -76,7 +64,7 @@ export default async function RootLayout({
         src="https://plausible.io/js/script.js"
       ></Script>
       <body
-        className={`${inter.variable} ${ptSans.variable} antialiased bg-black dark h-[100dvh] overflow-hidden`}
+        className="antialiased bg-black dark h-[100dvh] overflow-hidden"
       >
         <Toaster richColors position="bottom-center" />
         <TanstackProvider>
